@@ -1,5 +1,5 @@
 
 
-run small_mnist.py 
+* run small_mnist.py 
 
-run plot_comparison.py to get the results plot. 
+* run plot_comparison.py to get the results plot. 
