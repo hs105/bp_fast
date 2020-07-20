@@ -49,7 +49,7 @@ def last_layer_1step(X, Y, w):
 
     w = w - R.dot(np.diag(alpha))
 
-    #recalculate; R1 should always be smaller
+    #recalculate; R1 should always be smaller than R
     R1 = A.dot(w) - b
 
     return w, alpha, R, R1
@@ -95,9 +95,11 @@ w, st, err, err1, final_acc = ill_example1(W, num_steps=100)
 plt.figure(1)
 plt.plot(err, '-b+', label='BEFORE weight update')
 plt.plot(err1, '-k.', label='AFTER weight update')
+plt.legend()
 plt.xlabel('steps')
 plt.ylabel('loss (squared norm of gradient)')
 plt.yscale('log')
+plt.title('the \'AFTER\' curve should always be smaller')
 plt.show()
 
 
