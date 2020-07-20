@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
 
 #similar ill-conditioned experiments as in https://github.com/benjamin-recht/shallow-linear-net/blob/master/TwoLayerLinearNets.ipynb
 #first imitating a one-layer net
@@ -30,37 +31,83 @@ def gen_data(W, nsamples, xdim):
     Y = X.dot(W)
     return X, Y
 
-def min_grad(W, num_steps):
+def last_layer_1step(X, Y, w):
+    '''
+    our algorithm for updating the last layer ( only one step).
+    '''
+    A = X.T.dot(X)
+    b = X.T.dot(Y)
+
+    R = A.dot(w) - b
+    P = A.dot(R)
+
+    alpha_n = row_wise_dot(P.T, R.T)
+    alpha_d = row_wise_dot(P.T, P.T)
+
+    # could alpha_d contain 0?
+    alpha = alpha_n / alpha_d
+
+    w = w - R.dot(np.diag(alpha))
+
+    #recalculate; R1 should always be smaller
+    R1 = A.dot(w) - b
+
+    return w, alpha, R, R1
+
+def ill_example1(W, num_steps):
+    '''this illustrate our algorithm for solving an ill-conditioned learning example with only one layer '''
     m, n = (xdim, ydim)
     w = np.random.rand(m, n)
     final_acc = None
-    st = []
+    st = np.empty((num_steps, w.shape[1]))
+    err = []
+    err1 = []
+    for k in range(num_steps):
+        X, Y = gen_data(W, nsamples, xdim)
+
+        w, alpha, R, R1 = last_layer_1step(X, Y, w)
+
+        st[k, :] = alpha
+        err.append(np.linalg.norm(R))
+        err1.append(np.linalg.norm(R1))
+    return w, st, err, err1, final_acc
+
+def min_delta(W, num_steps):
+    '''minimizing the prediction error'''
+    m, n = (xdim, ydim)
+    w = np.random.rand(m, n)
+    final_acc = None
+    st = np.empty((num_steps, w.shape[1]))
     err = []
     for k in range(num_steps):
         X, Y = gen_data(W, nsamples, xdim)
 
-        A = X.T.dot(X)
-        b = X.T.dot(Y)
+        delta = X.dot(w) - Y
+        print('X.shape:', X.shape)
+        print('delta.shape', delta.shape)
+        dotx = row_wise_dot(X, delta)
+        print('dotx.shape:', dotx.shape)
+        sys.exit(1)
 
-        R = A.dot(w) - b
-        P = A.dot(R)
+# min_delta(W, num_steps=100)
 
-        alpha_n = row_wise_dot(P.T, R.T)
-        alpha_d = row_wise_dot(P.T, P.T)
-
-        # could alpha_d contain 0?
-        alpha = alpha_n / alpha_d
-
-        w = w - R.dot(np.diag(alpha))
-
-        st.append(alpha)
-        err.append(np.linalg.norm(R))
-    return w, st, err, final_acc
-
-w, st, err, final_acc = min_grad(W, num_steps=100)
-plt.plot(err, '-b+')
+w, st, err, err1, final_acc = ill_example1(W, num_steps=100)
+plt.figure(1)
+plt.plot(err, '-b+', label='BEFORE weight update')
+plt.plot(err1, '-k.', label='AFTER weight update')
 plt.xlabel('steps')
-plt.ylabel('loss')
+plt.ylabel('loss (squared norm of gradient)')
 plt.yscale('log')
 plt.show()
+
+
+plt.figure(2)
+markers = ['-b+', '--ko', ':g<', '--rs']
+for i in range(len(markers)):#range(st.shape[1]):
+    plt.plot(st[:, i], markers[i])
+plt.xlabel('steps')
+plt.ylabel('step-sizes')
+# plt.yscale('log')
+plt.show()
+
 
