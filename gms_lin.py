@@ -32,6 +32,7 @@ def gen_data(W, nsamples, xdim):
     return X, Y
 
 def rate_of_mr(A):
+    '''mr: stands for minimal residual: residual means gradient norm'''
     mu = min(np.linalg.eigvals(A + A.T)) / 2
     sigma = np.linalg.norm(A, 2)
     #inverse condition number is in play!
@@ -87,23 +88,22 @@ def ill_example1(W, num_steps):
         rates.append(rate)
     return w, st, err, err1, err_Y, rates
 
-def min_delta(W, num_steps):
-    '''minimizing the prediction error'''
-    m, n = (xdim, ydim)
-    w = np.random.rand(m, n)
-    final_acc = None
-    st = np.empty((num_steps, n))
-    err = []
-    for k in range(num_steps):
-        X, Y = gen_data(W, nsamples, xdim)
-
-        delta = X.dot(w) - Y
-        print('X.shape:', X.shape)
-        print('delta.shape', delta.shape)
-        dotx = row_wise_dot(X, delta)
-        print('dotx.shape:', dotx.shape)
-        sys.exit(1)
-
+# def min_delta(W, num_steps):
+#     '''minimizing the prediction error'''
+#     m, n = (xdim, ydim)
+#     w = np.random.rand(m, n)
+#     final_acc = None
+#     st = np.empty((num_steps, n))
+#     err = []
+#     for k in range(num_steps):
+#         X, Y = gen_data(W, nsamples, xdim)
+#
+#         delta = X.dot(w) - Y
+#         print('X.shape:', X.shape)
+#         print('delta.shape', delta.shape)
+#         dotx = row_wise_dot(X, delta)
+#         print('dotx.shape:', dotx.shape)
+#         sys.exit(1)
 # min_delta(W, num_steps=100)
 
 w, st, err, err1, err_Y, rates = ill_example1(W, num_steps=100)
