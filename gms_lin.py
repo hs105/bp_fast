@@ -175,13 +175,13 @@ def last_layer_1step3(X, Y, w1, w2, w3):
 
 def last_layer_1step_nlayers(X, Y, w, w_last):
     '''
-    our algorithm for updating the last layer (only one step), w[-1]
-    w[:-1] is fixed
+    our algorithm for updating the last layer (only one step), w
+    all w is fixed
     '''
-    for i in range(w.shape[0]):
+    for i in range(len(w)):
         print('layer: ', i)
         print_conditioning(X)
-        X = X.dot(w[i, :, :])
+        X = X.dot(w[i])
     print_conditioning(X)
 
     w_last, alpha, R, R1, err_Y, rate = last_layer_1step(X, Y, w_last)
@@ -190,10 +190,10 @@ def last_layer_1step_nlayers(X, Y, w, w_last):
 def ill_example1_nlayers(W, num_steps, n_layers):
     '''this illustrate our algorithm for solving the same ill-conditioned learning example but with n layers '''
     m, n = (xdim, ydim)
-    w = np.zeros((n_layers-1, m, m))
+    w = {}
     for i in range(n_layers-1):
-        # w[i, :, :] = np.random.rand(m, m) * 1/np.sqrt(m)# xavier
-        w[i, :, :] = np.random.rand(m, m)
+        # w[i] = np.random.rand(m, m) * 1/np.sqrt(m)# xavier
+        w[i] = np.random.rand(m, m)
     w_last = np.random.rand(m, n) * 1/np.sqrt(m)
 
     st = np.empty((num_steps, n))
@@ -225,7 +225,6 @@ plt.xlabel('steps')
 plt.ylabel('loss (squared norm of gradient)')
 plt.yscale('log')
 plt.title('the \'AFTER\' curve should always be smaller')
-
 # plt.figure(4)
 # markers = ['-b+', '-ko', '-g<', '-rs']
 # for i in range(len(markers)):#range(st.shape[1]):
@@ -235,11 +234,11 @@ plt.title('the \'AFTER\' curve should always be smaller')
 
 plt.figure(3)
 
-num_layers = 3
-w, st, err, err1, err_Y, rates = ill_example1_nlayers(W, num_steps=100, n_layers=num_layers)
-# plt.plot(err, '--r+', label=str(num_layers) + '-layer: BEFORE weight update')
-# plt.plot(err1, '--g.',label=str(num_layers) + '-layer: AFTER weight update')
-plt.plot(err_Y, '--go', label=str(num_layers) + '-layer: error of predicting Y')
+# num_layers = 3
+# w, st, err, err1, err_Y, rates = ill_example1_nlayers(W, num_steps=100, n_layers=num_layers)
+# # plt.plot(err, '--r+', label=str(num_layers) + '-layer: BEFORE weight update')
+# # plt.plot(err1, '--g.',label=str(num_layers) + '-layer: AFTER weight update')
+# plt.plot(err_Y, '--go', label=str(num_layers) + '-layer: error of predicting Y')
 
 num_layers = 5
 w, st, err, err1, err_Y, rates = ill_example1_nlayers(W, num_steps=100, n_layers=num_layers)
@@ -247,25 +246,24 @@ w, st, err, err1, err_Y, rates = ill_example1_nlayers(W, num_steps=100, n_layers
 # plt.plot(err1, '--g.',label=str(num_layers) + '-layer: AFTER weight update')
 plt.plot(err_Y, '--rs', label=str(num_layers) + '-layer: error of predicting Y')
 
-num_layers = 10
-w, st, err, err1, err_Y, rates = ill_example1_nlayers(W, num_steps=100, n_layers=num_layers)
-# plt.plot(err, '--r+', label=str(num_layers) + '-layer: BEFORE weight update')
-# plt.plot(err1, '--g.',label=str(num_layers) + '-layer: AFTER weight update')
-plt.plot(err_Y, '--k+', label=str(num_layers) + '-layer: error of predicting Y')
-
-num_layers = 20
-w, st, err, err1, err_Y, rates = ill_example1_nlayers(W, num_steps=100, n_layers=num_layers)
-# plt.plot(err, '--r+', label=str(num_layers) + '-layer: BEFORE weight update')
-# plt.plot(err1, '--g.',label=str(num_layers) + '-layer: AFTER weight update')
-plt.plot(err_Y, '--b.', label=str(num_layers) + '-layer: error of predicting Y')
-
-# plt.plot(rates, '--gh', label='3-layer: rates')
-plt.legend()
-plt.xlabel('steps')
-plt.ylabel('loss (squared norm of gradient)')
-plt.yscale('log')
-# plt.title('the \'AFTER\' curve should always be smaller')
-plt.title('Comparison of initialization effects in n-layer net')
+# num_layers = 10
+# w, st, err, err1, err_Y, rates = ill_example1_nlayers(W, num_steps=100, n_layers=num_layers)
+# # plt.plot(err, '--r+', label=str(num_layers) + '-layer: BEFORE weight update')
+# # plt.plot(err1, '--g.',label=str(num_layers) + '-layer: AFTER weight update')
+# plt.plot(err_Y, '--k+', label=str(num_layers) + '-layer: error of predicting Y')
+#
+# num_layers = 20
+# w, st, err, err1, err_Y, rates = ill_example1_nlayers(W, num_steps=100, n_layers=num_layers)
+# # plt.plot(err, '--r+', label=str(num_layers) + '-layer: BEFORE weight update')
+# # plt.plot(err1, '--g.',label=str(num_layers) + '-layer: AFTER weight update')
+# plt.plot(err_Y, '--b.', label=str(num_layers) + '-layer: error of predicting Y')
+#
+# # plt.plot(rates, '--gh', label='3-layer: rates')
+# plt.xlabel('steps')
+# plt.ylabel('loss (squared norm of gradient)')
+# plt.yscale('log')
+# # plt.title('the \'AFTER\' curve should always be smaller')
+# plt.title('Comparison of initialization effects in n-layer net')
 
 # plt.figure(4)
 # markers = ['--bs', '--k+', '--gh', '--rh']
@@ -274,11 +272,15 @@ plt.title('Comparison of initialization effects in n-layer net')
 # plt.xlabel('steps')
 # plt.ylabel('step-sizes')
 
-plt.show()
+# plt.legend()
+# plt.show()
 
-def ill_example1_2layers_1(W, n1, num_steps):
+
+def ill_example1_2layers_our_init(W, n1, num_steps):
     ''' n1: output size of layer 1
     n1 is smaller or larger than m
+    same as ill_example1_nlayers_our_init with n_layers=2
+    just keep it for now
     '''
     m, n = (xdim, ydim)
     if m > n1:
@@ -286,8 +288,8 @@ def ill_example1_2layers_1(W, n1, num_steps):
         #w1 = np.vstack((w1, np.zeros((m-n1, n1))))
         w1 = np.vstack((w1, 0.1 * np.random.rand(m-n1, n1)))
     elif m < n1:
-        w1 = np.eye(m) + 0.9 * np.random.rand(m, m)
-        w1 = np.hstack((w1, 0.9 * np.random.rand(m, n1-m)))
+        w1 = np.eye(m) + 0.1 * np.random.rand(m, m)
+        w1 = np.hstack((w1, 0.1 * np.random.rand(m, n1-m)))
     else:
         w1 = np.eye(m) + 0.1 * np.random.rand(m, m)
 
@@ -311,25 +313,70 @@ def ill_example1_2layers_1(W, n1, num_steps):
         rates.append(rate)
     return w2, st, err, err1, err_Y, rates
 
+
+def ill_example1_nlayers_our_init(W, n1, n_layers, num_steps):
+    '''
+    n1: output size of layer 1
+    n1 is smaller or larger than m
+    the only difference from ill_example1_nlayers is in weight initialization
+    '''
+    m, n = (xdim, ydim)
+
+    w = {}
+    for i in range(n_layers - 1):
+        if i == 0:
+            if m > n1:
+                tmp = np.eye(n1) + 0.001 * np.random.rand(n1, n1)
+                w[i] = np.vstack((tmp, 0.001 * np.random.rand(m - n1, n1)))
+            elif m < n1:
+                tmp = np.eye(m) + 0.001 * np.random.rand(m, m)
+                w[i] = np.hstack((tmp, 0.001 * np.random.rand(m, n1 - m)))
+            else:
+                w[i] = np.eye(m) + 0.001 * np.random.rand(m, m)
+            assert w[i].shape == (m, n1)
+        else:
+            #assuming all the other layers's size is n1 for simplicity
+            w[i] = np.eye(n1) + 0.001 * np.random.rand(n1, n1)
+
+    w_last = np.random.rand(n1, n) * 1 / np.sqrt(m)
+    st = np.empty((num_steps, n))
+    err = []
+    err1 = []
+    err_Y = []
+    rates = []
+    for k in range(num_steps):
+        X, Y = gen_data(W, nsamples, xdim)
+
+        w_last, alpha, R, R1, errY, rate = last_layer_1step_nlayers(X, Y, w, w_last)
+
+        st[k, :] = alpha
+        err.append(np.linalg.norm(R))
+        err1.append(np.linalg.norm(R1))
+        err_Y.append(np.linalg.norm(errY))
+        rates.append(rate)
+    return w_last, st, err, err1, err_Y, rates
+
+
 # n1 = xdim - 2 #condition number being small, but the error is high because of compressing information.
 n1 = xdim + 2 #overdetermined. the underlying matrix is not invertible, so matrix is ill-conditioned. --confirm?
 
-# w, st, err, err1, err_Y, rates = ill_example1_2layers_1(W, n1, num_steps=100)
-# plt.figure(3)
+w, st, err, err1, err_Y, rates = ill_example1_2layers_our_init(W, n1, num_steps=100)
+plt.figure(3)
 # plt.plot(err, '-b+', label='BEFORE weight update')
 # plt.plot(err1, '-k.', label='AFTER weight update')
-# plt.plot(err_Y, '-ro', label='error of predicting Y')
+plt.plot(err_Y, '-g+', label='our init-2-layer: error of predicting Y')
 # plt.plot(rates, '-g<', label='rates')
-# plt.legend()
-# plt.xlabel('steps')
-# plt.ylabel('loss (squared norm of gradient)')
-# plt.yscale('log')
-# plt.title('2-layer net: the \'AFTER\' curve should always be smaller')
 #
+# # plt.title('2-layer net: the \'AFTER\' curve should always be smaller')
+num_layers = 10#5#3#2
+w, st, err, err1, err_Y, rates = ill_example1_nlayers_our_init(W, n1, n_layers=num_layers, num_steps=100)
+plt.plot(err_Y, '--bo', label='our init-'+ str(num_layers)+'-layer: error of predicting Y')
+plt.legend()
+plt.show()
+
 # plt.figure(4)
 # markers = ['-b+', '--ko', ':g<', '--rs']
 # for i in range(len(markers)):#range(st.shape[1]):
 #     plt.plot(st[:, i], markers[i])
 # plt.xlabel('steps')
 # plt.ylabel('step-sizes')
-# plt.show()
