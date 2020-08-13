@@ -1,23 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
+from problem import xdim, ydim, gen_data
 
 #similar ill-conditioned experiments as in https://github.com/benjamin-recht/shallow-linear-net/blob/master/TwoLayerLinearNets.ipynb
 #first imitating a one-layer net
 
-def gen_ill_cond_matrix(xdim = 6, ydim=10):
-    A = np.random.rand(ydim, xdim)
-    u, s, v = np.linalg.svd(A, full_matrices=False)
-    # s[0] *= 1e5
-    B = np.matmul(u, np.matmul(np.diag(s), v))
-    return B.T
-    # print(np.allclose(A, Atrue)
-
-xdim = 6
-ydim=10
 nsamples = 1000
-W = gen_ill_cond_matrix(xdim, ydim)
-print('cond(W): ', np.linalg.cond(W))
 
 def row_wise_dot(a, b):
     '''row-wise dot'''
@@ -25,11 +14,6 @@ def row_wise_dot(a, b):
     for i, (row1, row2) in enumerate(zip(a, b)):
         result[i] = np.dot(row1, row2)
     return result
-
-def gen_data(W, nsamples, xdim):
-    X = np.random.randn(nsamples, xdim)
-    Y = np.matmul(X, W)
-    return X, Y
 
 def rate_of_mr(A):
     '''mr: stands for minimal residual: residual means gradient norm'''
@@ -67,7 +51,7 @@ def last_layer_1step(X, Y, w):
 
     return w, alpha, R, R1, err_Y, rate
 
-def ill_example1(W, num_steps):
+def ill_example1(num_steps):
     '''this illustrate our algorithm for solving an ill-conditioned learning example with only one layer '''
     m, n = (xdim, ydim)
     w = np.random.rand(m, n)
@@ -77,7 +61,7 @@ def ill_example1(W, num_steps):
     err_Y = []
     rates = []
     for k in range(num_steps):
-        X, Y = gen_data(W, nsamples, xdim)
+        X, Y = gen_data(nsamples, xdim)
 
         w, alpha, R, R1, errY, rate = last_layer_1step(X, Y, w)
 
@@ -106,7 +90,7 @@ def ill_example1(W, num_steps):
 #         sys.exit(1)
 # min_delta(W, num_steps=100)
 
-w, st, err, err1, err_Y, rates = ill_example1(W, num_steps=100)
+w, st, err, err1, err_Y, rates = ill_example1(num_steps=100)
 plt.figure(1)
 plt.plot(err, '-b+', label='BEFORE weight update')
 plt.plot(err1, '-k.', label='AFTER weight update')
@@ -187,7 +171,7 @@ def last_layer_1step_nlayers(X, Y, w, w_last):
     w_last, alpha, R, R1, err_Y, rate = last_layer_1step(X, Y, w_last)
     return w_last, alpha, R, R1, err_Y, rate
 
-def ill_example1_nlayers(W, num_steps, n_layers):
+def ill_example1_nlayers(num_steps, n_layers):
     '''this illustrate our algorithm for solving the same ill-conditioned learning example but with n layers '''
     m, n = (xdim, ydim)
     w = {}
@@ -202,7 +186,7 @@ def ill_example1_nlayers(W, num_steps, n_layers):
     err_Y = []
     rates = []
     for k in range(num_steps):
-        X, Y = gen_data(W, nsamples, xdim)
+        X, Y = gen_data(nsamples, xdim)
 
         w_last, alpha, R, R1, errY, rate = last_layer_1step_nlayers(X, Y, w, w_last)
 
@@ -214,7 +198,7 @@ def ill_example1_nlayers(W, num_steps, n_layers):
     return w_last, st, err, err1, err_Y, rates
 
 num_layers = 2
-w, st, err, err1, err_Y, rates = ill_example1_nlayers(W, num_steps=100, n_layers=num_layers)
+w, st, err, err1, err_Y, rates = ill_example1_nlayers(num_steps=100, n_layers=num_layers)
 plt.figure(3)
 # plt.plot(err, '-b+',   label=str(num_layers) + '-layer: BEFORE weight update')
 # plt.plot(err1, '-k.',  label=str(num_layers) + '-layer: AFTER weight update')
@@ -241,7 +225,7 @@ plt.figure(3)
 # plt.plot(err_Y, '--go', label=str(num_layers) + '-layer: error of predicting Y')
 
 num_layers = 5
-w, st, err, err1, err_Y, rates = ill_example1_nlayers(W, num_steps=100, n_layers=num_layers)
+w, st, err, err1, err_Y, rates = ill_example1_nlayers(num_steps=100, n_layers=num_layers)
 # plt.plot(err, '--r+', label=str(num_layers) + '-layer: BEFORE weight update')
 # plt.plot(err1, '--g.',label=str(num_layers) + '-layer: AFTER weight update')
 plt.plot(err_Y, '--rs', label=str(num_layers) + '-layer: error of predicting Y')
@@ -276,7 +260,7 @@ plt.plot(err_Y, '--rs', label=str(num_layers) + '-layer: error of predicting Y')
 # plt.show()
 
 
-def ill_example1_2layers_our_init(W, n1, num_steps):
+def ill_example1_2layers_our_init(n1, num_steps):
     ''' n1: output size of layer 1
     n1 is smaller or larger than m
     same as ill_example1_nlayers_our_init with n_layers=2
@@ -302,7 +286,7 @@ def ill_example1_2layers_our_init(W, n1, num_steps):
     err_Y = []
     rates = []
     for k in range(num_steps):
-        X, Y = gen_data(W, nsamples, xdim)
+        X, Y = gen_data(nsamples, xdim)
 
         w2, alpha, R, R1, errY, rate = last_layer_1step2(X, Y, w1, w2)
 
@@ -314,7 +298,7 @@ def ill_example1_2layers_our_init(W, n1, num_steps):
     return w2, st, err, err1, err_Y, rates
 
 
-def ill_example1_nlayers_our_init(W, n1, n_layers, num_steps):
+def ill_example1_nlayers_our_init(n1, n_layers, num_steps):
     '''
     n1: output size of layer 1
     n1 is smaller or larger than m
@@ -345,7 +329,7 @@ def ill_example1_nlayers_our_init(W, n1, n_layers, num_steps):
     err_Y = []
     rates = []
     for k in range(num_steps):
-        X, Y = gen_data(W, nsamples, xdim)
+        X, Y = gen_data(nsamples, xdim)
 
         w_last, alpha, R, R1, errY, rate = last_layer_1step_nlayers(X, Y, w, w_last)
 
@@ -360,7 +344,7 @@ def ill_example1_nlayers_our_init(W, n1, n_layers, num_steps):
 # n1 = xdim - 2 #condition number being small, but the error is high because of compressing information.
 n1 = xdim + 2 #overdetermined. the underlying matrix is not invertible, so matrix is ill-conditioned. --confirm?
 
-w, st, err, err1, err_Y, rates = ill_example1_2layers_our_init(W, n1, num_steps=100)
+w, st, err, err1, err_Y, rates = ill_example1_2layers_our_init(n1, num_steps=100)
 plt.figure(3)
 # plt.plot(err, '-b+', label='BEFORE weight update')
 # plt.plot(err1, '-k.', label='AFTER weight update')
@@ -369,7 +353,7 @@ plt.plot(err_Y, '-g+', label='our init-2-layer: error of predicting Y')
 #
 # # plt.title('2-layer net: the \'AFTER\' curve should always be smaller')
 num_layers = 10#5#3#2
-w, st, err, err1, err_Y, rates = ill_example1_nlayers_our_init(W, n1, n_layers=num_layers, num_steps=100)
+w, st, err, err1, err_Y, rates = ill_example1_nlayers_our_init(n1, n_layers=num_layers, num_steps=100)
 plt.plot(err_Y, '--bo', label='our init-'+ str(num_layers)+'-layer: error of predicting Y')
 plt.legend()
 plt.show()
