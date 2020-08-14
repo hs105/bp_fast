@@ -4,22 +4,25 @@ import torch.nn.init as init
 import numpy as np
 import matplotlib.pyplot as plt
 from problem import gen_data
-from models import nn_1layer_Xavier, NN_2layers_Xavier, NN_nlayers_Xavier, NN_2layers_Uniform, NN_nlayers_Uniform, NN_2layers_Freeze, NN_nlayers_Freeze
+from models import nn_1layer_Xavier, NN_2layers_Xavier, NN_nlayers_Xavier, \
+    NN_2layers_Uniform, NN_nlayers_Uniform, \
+    NN_2layers_Freeze, NN_nlayers_Freeze, \
+    nn_1layer_iDelta, NN_2layers_iDelta, NN_nlayers_iDelta
+
 
 '''initialization experiment using pytorch'''
 
 #todo: see if reducing step-size for 10-layer net will lead to better curve.
 
-
-num_epochs = 2500
+num_epochs = 1500
 learning_rate = 0.1#tuned a bit
 nsamples = 1000
 
-def train(model):
+def train(model, step_size = learning_rate):
 
     # Loss and optimizer
     criterion = nn.MSELoss()
-    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.SGD(model.parameters(), lr=step_size)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -49,12 +52,13 @@ def train(model):
 
 
 
-a_losses_1layer = train(nn_1layer_Xavier())
+# a_losses_1layer = train(nn_1layer_Xavier())
 a_losses_2layers = train(NN_2layers_Xavier())
 a_losses_10layers = train(NN_nlayers_Xavier(10))
+a_losses_20layers = train(NN_nlayers_Xavier(20))
 
-a_losses_2layer_uniform = train(NN_2layers_Uniform())
-a_losses_10layers_uniform = train(NN_nlayers_Uniform(10))
+# a_losses_2layer_uniform = train(NN_2layers_Uniform())
+# a_losses_10layers_uniform = train(NN_nlayers_Uniform(10))
 
 nn2_freeze = NN_2layers_Freeze()
 #check point: the w1 if it's frozen
@@ -67,18 +71,31 @@ w2_after = nn2_freeze.fc2.weight
 print('change in w1:', torch.norm(w1_before - w1_after))
 print('change in w2:', torch.norm(w2_before - w2_after))
 
-nn_10layers_freeze = NN_nlayers_Freeze(10)
-a_losses_10layers_freeze = train(nn_10layers_freeze)
+# a_losses_5layers_freeze = train(NN_nlayers_Freeze(5))
+
+# a_losses_10layers_freeze = train(NN_nlayers_Freeze(10))
+# a_losses_1layer_iDelta=train(nn_1layer_iDelta())
+a_losses_2layers_iDelta = train(NN_2layers_iDelta())
+a_losses_10layers_iDelta = train(NN_nlayers_iDelta(10))
+a_losses_20layers_iDelta = train(NN_nlayers_iDelta(20))
 
 #plot graphs
-plt.plot(a_losses_1layer, '-b+', label='1 layer -- xavier')
-# plt.plot(a_losses_2layers, '--ko', label = '2 layers -- xavier')
-plt.plot(a_losses_10layers, '-.gp', label = '10 layers, -- xavier')
-# plt.plot(a_losses_2layer_uniform, '-yh', label= '2 layers --uniform')
-plt.plot(a_losses_10layers_uniform, '-mo', label= '10 layers --uniform')
+# plt.plot(a_losses_1layer, '-b+', label='1 layer -- xavier')
+plt.plot(a_losses_2layers, '--ro', label = '2 layers -- xavier')
+plt.plot(a_losses_10layers, '-.rp', label = '10 layers -- xavier')
+plt.plot(a_losses_20layers, ':rx', label='20 layers -- xavier')
 
-plt.plot(a_losses_2layers_freeze, '-r+', label= '2 layers --freeze')
-plt.plot(a_losses_10layers_freeze, '--ks', label = '10 layers -- freeze')
+# plt.plot(a_losses_2layer_uniform, '-yh', label= '2 layers --uniform')
+# plt.plot(a_losses_10layers_uniform, '-mo', label= '10 layers --uniform')#diverges
+
+# plt.plot(a_losses_2layers_freeze, '-g+', label= '2 layers --freeze')
+# plt.plot(a_losses_5layers_freeze, ':mo', label = '5 layers -- freeze')
+# plt.plot(a_losses_10layers_freeze, '--gs', label = '10 layers -- freeze')
+
+# plt.plot(a_losses_1layer_iDelta, '-yh', label='1 layer -- iDelta')
+plt.plot(a_losses_2layers_iDelta, '--bp', label='2 layers -- iDelta')
+plt.plot(a_losses_10layers_iDelta, '-bx', label='10 layers -- iDelta')
+plt.plot(a_losses_20layers_iDelta, '-m.', label='20 layers -- iDelta')
 
 plt.yscale('log')
 plt.legend()
